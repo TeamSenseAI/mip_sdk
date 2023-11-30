@@ -16,7 +16,9 @@
 ///@}
 
 #ifdef __cplusplus
+#ifndef __PX4_NUTTX
 #include <type_traits>
+#endif
 
 namespace mip {
 namespace C {
@@ -173,6 +175,7 @@ inline void insert(Serializer& serializer, int64_t value)  { return C::insert_s6
 inline void insert(Serializer& serializer, float  value)   { return C::insert_float (&serializer, value); }
 inline void insert(Serializer& serializer, double value)   { return C::insert_double(&serializer, value); }
 
+#ifndef __PX4_NUTTX
 ////////////////////////////////////////////////////////////////////////////////
 ///@brief Inserts an enum into the buffer.
 ///
@@ -184,7 +187,7 @@ inline void insert(Serializer& serializer, double value)   { return C::insert_do
 template<typename Enum>
 typename std::enable_if< std::is_enum<Enum>::value, void>::type
 /*void*/ insert(Serializer& serializer, Enum value) { return insert(serializer, static_cast< typename std::underlying_type<Enum>::type >(value) ); }
-
+#endif
 ////////////////////////////////////////////////////////////////////////////////
 ///@brief Insert the given value into the buffer.
 ///
@@ -218,6 +221,7 @@ inline void extract(Serializer& serializer, int64_t& value)  { return C::extract
 inline void extract(Serializer& serializer, float&  value)   { return C::extract_float (&serializer, &value); }
 inline void extract(Serializer& serializer, double& value)   { return C::extract_double(&serializer, &value); }
 
+#ifndef __PX4_NUTTX
 ////////////////////////////////////////////////////////////////////////////////
 ///@brief Extract an enum from the buffer.
 ///
@@ -233,6 +237,7 @@ typename std::enable_if< std::is_enum<Enum>::value, void>::type
     extract(serializer, tmp);
     value = static_cast<Enum>(tmp);
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 ///@brief Extract the value given a buffer, size, and starting offset.

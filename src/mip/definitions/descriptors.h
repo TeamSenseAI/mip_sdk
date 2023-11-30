@@ -6,10 +6,10 @@
 #include "../utils/serialization.h"
 
 #ifdef __cplusplus
-
+#ifndef __PX4_NUTTX
 #include <tuple>
 #include <type_traits>
-
+#endif
 namespace mip {
 namespace C {
 extern "C" {
