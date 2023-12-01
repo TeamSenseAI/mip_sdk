@@ -126,19 +126,7 @@ add_library(mip_sdk ${ALL_MIP_SOURCES})
 add_dependencies(mip_sdk prebuild_targets nuttx_context)
 target_compile_options(mip_sdk
         PRIVATE
-                -Wno-double-promotion
-                # -Wno-pointer-sign
-                -Wno-cast-align
-                -Wno-unused-but-set-parameter
-                -Wno-sign-compare
-                # -Wno-bad-function-cast
-                -Wno-empty-body
-                -Wno-switch
-                -Wno-unused-variable
-                -Wno-format
-                -Wno-format-security
                 -Wno-shadow
-                -std=gnu99
 )
 
 if("${PX4_PLATFORM}" MATCHES "nuttx")
