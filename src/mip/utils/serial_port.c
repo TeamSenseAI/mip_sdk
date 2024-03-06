@@ -20,7 +20,7 @@ speed_t baud_rate_to_speed(int baud_rate)
         return B115200;
     case 230400:
         return B230400;
-#ifdef __linux__ //Linux onnly baudrates
+#if defined(__linux__) || defined(__NUTTX__) //Linux only baudrates
     case 460800:
         return B460800;
     case 500000:
@@ -63,7 +63,7 @@ bool serial_port_open(serial_port *port, const char *port_str, int baudrate)
 
     //Connect to the provided com port
     port->handle = CreateFile(port_str, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-    
+
     //Check for an invalid handle
     if(port->handle == INVALID_HANDLE_VALUE)
     {
@@ -74,7 +74,7 @@ bool serial_port_open(serial_port *port, const char *port_str, int baudrate)
     //Setup the com port buffer sizes
     if(SetupComm(port->handle, COM_PORT_BUFFER_SIZE, COM_PORT_BUFFER_SIZE) == 0)
         return false;
-    
+
     //Set the timeouts
     COMMTIMEOUTS timeouts;
     GetCommTimeouts(port->handle, &timeouts);
@@ -90,7 +90,7 @@ bool serial_port_open(serial_port *port, const char *port_str, int baudrate)
 
     //Setup the com port parameters
     ready = GetCommState(port->handle, &dcb);
-    
+
     //Close the serial port, mutex, and exit
     if(!ready)
     {
@@ -98,7 +98,7 @@ bool serial_port_open(serial_port *port, const char *port_str, int baudrate)
         return false;
     }
 
-    dcb.BaudRate      = baudrate;   //Baudrate is typically 115200 
+    dcb.BaudRate      = baudrate;   //Baudrate is typically 115200
     dcb.ByteSize      = 8;          //Charsize is 8,  default for MicroStrain
     dcb.Parity        = NOPARITY;   //Parity is none, default for MicroStrain
     dcb.StopBits      = ONESTOPBIT; //Stopbits is 1,  default for MicroStrain
@@ -106,14 +106,14 @@ bool serial_port_open(serial_port *port, const char *port_str, int baudrate)
     dcb.fDtrControl   = DTR_CONTROL_ENABLE;
 
     ready = SetCommState(port->handle, &dcb);
-    
+
     //Close the serial port and exit
     if(!ready)
     {
         CloseHandle(port->handle);
         return false;
     }
-    
+
 #else //Linux
 
     port->handle = open(port_str, O_RDWR | O_NOCTTY | O_SYNC);
@@ -144,7 +144,7 @@ bool serial_port_open(serial_port *port, const char *port_str, int baudrate)
     // Persist the settings
     if(tcsetattr(port->handle, TCSANOW, &serial_port_settings) < 0)
         return false;
-    
+
     // Flush any waiting data
     tcflush(port->handle, TCIOFLUSH);
 
@@ -175,13 +175,13 @@ bool serial_port_close(serial_port *port)
 
 bool serial_port_write(serial_port *port, const void *buffer, size_t num_bytes, size_t *bytes_written)
 {
- 
+
     *bytes_written = 0;
 
     //Check for a valid port handle
     if(!port->is_open)
         return false;
-    
+
 #ifdef WIN32 //Windows
     DWORD  local_bytes_written;
 
@@ -189,7 +189,7 @@ bool serial_port_write(serial_port *port, const void *buffer, size_t num_bytes, 
     if(WriteFile(port->handle, buffer, num_bytes, &local_bytes_written, NULL))
     {
         *bytes_written = local_bytes_written;
-    
+
         if(*bytes_written == num_bytes)
             return true;
     }
@@ -199,7 +199,7 @@ bool serial_port_write(serial_port *port, const void *buffer, size_t num_bytes, 
 
     if(*bytes_written == num_bytes)
         return true;
-    
+
 #endif
 
     return false;
@@ -207,14 +207,14 @@ bool serial_port_write(serial_port *port, const void *buffer, size_t num_bytes, 
 
 bool serial_port_read(serial_port *port, void *buffer, size_t num_bytes, size_t *bytes_read)
 {
- 
+
     //Set the bytes read to zero
     *bytes_read = 0;
 
     //Check for a valid port handle
     if(!port->is_open)
         return false;
-  
+
 #ifdef WIN32 //Windows
     DWORD  local_bytes_read;
 
@@ -249,17 +249,17 @@ uint32_t serial_port_read_count(serial_port *port)
     //Check for a valid port handle
     if(!port->is_open)
         return 0;
- 
+
 #ifdef WIN32 //Windows
     COMSTAT com_status;
     DWORD   errors;
-    
+
     //This function gets the current com status
     if(ClearCommError(port->handle, &errors, &com_status))
     {
         return com_status.cbInQue;
     }
-    
+
 #else //Linux
     int bytes_available;
     ioctl(port->handle, FIONREAD, &bytes_available);
